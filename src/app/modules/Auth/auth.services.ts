@@ -132,6 +132,14 @@ export const verifyOTPForRegistration = async (email: string, otp: string) => {
   //  If successful, you can clear the OTP
   user.verification = undefined;
   await user.save();
+
+  if (user.status === 'pending') {
+    throw new AppError(
+      httpStatus.LOCKED,
+      "OTP verified successfully! However, your account is pending admin approval. You can login once approved."
+    );
+  }
+
   // Generate JWT tokens
   const jwtPayload = {
     userId: user._id!.toString(),
@@ -227,6 +235,13 @@ const loginUser = async (payload: TLoginUser) => {
     throw new AppError(
       httpStatus.FORBIDDEN,
       "OTP verification is required before logging in!"
+    );
+  }
+
+  if (user.status === 'pending') {
+    throw new AppError(
+      httpStatus.LOCKED,
+      "Your account is still pending admin approval. Please wait for confirmation."
     );
   }
 if (user.status === 'blocked') {
