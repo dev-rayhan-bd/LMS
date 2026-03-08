@@ -62,19 +62,36 @@ const syncAndGetStudentProgress = async (
 
   // 7. Status Determination Logic (Priority: Critical > Attention > Behind > On Track)
   let status: "on track" | "behind" | "attention" | "critical" = "on track";
+    
+ 
+const hasActivityStarted = totalDays > 0 || overdueTasksCount > 0 || markedSubmissions.length > 0;
 
-  // Critical if Attendance < 70% or Avg Grade < 40%
-  if (attendanceRate < 70 || avgGrade < 40) {
-    status = "critical";
-  }
-  // Attention if Attendance < 80% or 3+ overdue tasks
-  else if (attendanceRate < 80 || overdueTasksCount >= 3) {
-    status = "attention";
-  }
+  if (hasActivityStarted) {
+   // Critical if Attendance < 70% or Avg Grade < 40%
+    if (attendanceRate < 70 || (markedSubmissions.length > 0 && avgGrade < 40)) {
+      status = "critical";
+    } 
+      // Attention if Attendance < 80% or 3+ overdue tasks
+    else if (attendanceRate < 80 || overdueTasksCount >= 3) {
+      status = "attention";
+    } 
+    else if (attendanceRate < 90 || overdueTasksCount >= 1) {
+      status = "behind";
+    }
+  } else {
   // Behind if Attendance < 90% or 1+ overdue task
-  else if (attendanceRate < 90 || overdueTasksCount >= 1) {
-    status = "behind";
+    status = "on track";
   }
+
+
+
+
+  
+
+
+
+
+
 
   // 8. Update or Create progress record in Database
   const progressData = {
@@ -96,75 +113,203 @@ const syncAndGetStudentProgress = async (
   return result;
 };
 
+// const getCourseDashboardOverview = async (courseId: string) => {
+//   // 1. Fetch the course to get the total number of enrolled students
+//   const course = await CourseModel.findById(courseId);
+//   if (!course) {
+//     throw new Error("Course not found");
+//   }
+//   const totalEnrolled = course.students.length;
+
+//   // 2. Aggregate existing progress records from database
+//   const stats = await StudentProgressModel.aggregate([
+//     { $match: { course: new mongoose.Types.ObjectId(courseId) } },
+//     {
+//       $group: {
+//         _id: "$status",
+//         count: { $sum: 1 }
+//       }
+//     }
+//   ]);
+
+//   // 3. Extract counts for specific statuses
+//   const attention = stats.find(s => s._id === 'attention')?.count || 0;
+//   const behind = stats.find(s => s._id === 'behind')?.count || 0;
+//   const critical = stats.find(s => s._id === 'critical')?.count || 0;
+//   const recordedOnTrack = stats.find(s => s._id === 'on track')?.count || 0;
+
+//   // 4. Logic: Anyone not in 'attention', 'behind', or 'critical' is 'on track'
+//   // This ensures the summary matches the total student list in your UI
+//   const totalNonOnTrack = attention + behind + critical;
+//   const onTrack = totalEnrolled - totalNonOnTrack;
+
+//   return {
+//     onTrack: onTrack >= 0 ? onTrack : 0,
+//     attention,
+//     behind,
+//     critical,
+//     totalStudents: totalEnrolled
+//   };
+// };
+
+
 const getCourseDashboardOverview = async (courseId: string) => {
-  // 1. Fetch the course to get the total number of enrolled students
+
   const course = await CourseModel.findById(courseId);
   if (!course) {
     throw new Error("Course not found");
   }
-  const totalEnrolled = course.students.length;
 
-  // 2. Aggregate existing progress records from database
-  const stats = await StudentProgressModel.aggregate([
-    { $match: { course: new mongoose.Types.ObjectId(courseId) } },
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 }
+
+  const enrolledStudentIds = course.students; 
+  const progressRecords = await StudentProgressModel.find({
+    course: courseId,
+    student: { $in: enrolledStudentIds } 
+  }).lean();
+
+  let onTrack = 0;
+  let attention = 0;
+  let behind = 0;
+  let critical = 0;
+
+
+  enrolledStudentIds.forEach((studentId) => {
+    const progress = progressRecords.find(
+      (p) => p.student.toString() === studentId.toString()
+    );
+
+    if (progress) {
+  
+      const isFresh = 
+        progress.attendanceRate === 0 && 
+        progress.avgGrade === 0 && 
+        progress.overdueRate === 0;
+
+      if (isFresh) {
+        onTrack++;
+      } else {
+        if (progress.status === 'on track') onTrack++;
+        else if (progress.status === 'attention') attention++;
+        else if (progress.status === 'behind') behind++;
+        else if (progress.status === 'critical') critical++;
       }
+    } else {
+   
+      onTrack++;
     }
-  ]);
-
-  // 3. Extract counts for specific statuses
-  const attention = stats.find(s => s._id === 'attention')?.count || 0;
-  const behind = stats.find(s => s._id === 'behind')?.count || 0;
-  const critical = stats.find(s => s._id === 'critical')?.count || 0;
-  const recordedOnTrack = stats.find(s => s._id === 'on track')?.count || 0;
-
-  // 4. Logic: Anyone not in 'attention', 'behind', or 'critical' is 'on track'
-  // This ensures the summary matches the total student list in your UI
-  const totalNonOnTrack = attention + behind + critical;
-  const onTrack = totalEnrolled - totalNonOnTrack;
+  });
 
   return {
-    onTrack: onTrack >= 0 ? onTrack : 0,
+    onTrack,
     attention,
     behind,
     critical,
-    totalStudents: totalEnrolled
+    totalStudents: enrolledStudentIds.length
   };
 };
 
-// src/app/modules/Report/report.services.ts
+
+
+
+
+
+// const getStudentListWithStatus = async (courseId: string) => {
+//     // 1. Fetch course and populate students, teacher, and assistant
+//     const course = await CourseModel.findById(courseId)
+//         .populate('students')
+//         .populate({
+//             path: 'teacherId',
+//             select: 'fullName image contact email'
+//         })
+//         .populate({
+//             path: 'assistantId',
+//             select: 'fullName image contact email'
+//         })
+//         .lean();
+    
+//     if (!course) {
+//         throw new Error("Course not found");
+//     }
+
+//     // 2. Fetch all progress records for this course
+//     const progressRecords = await StudentProgressModel.find({ course: courseId }).lean();
+
+//     // 3. Map through all enrolled students
+//     const studentList = (course.students as any[]).map((student: any) => {
+//         const progress = progressRecords.find(
+//             (p) => p.student.toString() === student._id.toString()
+//         );
+
+//         if (progress) {
+//             return {
+//                 _id: progress._id,
+//                 student: {
+//                     _id: student._id,
+//                     fullName: student.fullName,
+//                     image: student.image,
+//                     contact: student.contact
+//                 },
+//                 status: progress.status,
+//                 attendanceRate: progress.attendanceRate,
+//                 avgGrade: progress.avgGrade,
+//                 homeworkCompletedRate: progress.homeworkCompletedRate,
+//                 overdueRate: progress.overdueRate,
+//                 updatedAt: progress.updatedAt
+//             };
+//         }
+
+//         return {
+//             student: {
+//                 _id: student._id,
+//                 fullName: student.fullName,
+//                 image: student.image,
+//                 contact: student.contact
+//             },
+//             status: 'on track',
+//             attendanceRate: 0,
+//             avgGrade: 0,
+//             homeworkCompletedRate: 0,
+//             overdueRate: 0,
+//             updatedAt: new Date()
+//         };
+//     });
+
+//     // 4. Return both Instructor Info and the Student List
+//     return {
+//         instructorInfo: {
+//             teacher: course.teacherId || null,
+//             assistant: course.assistantId || null
+//         },
+//         studentList: studentList
+//     };
+// };
 
 const getStudentListWithStatus = async (courseId: string) => {
-    // 1. Fetch course and populate students, teacher, and assistant
     const course = await CourseModel.findById(courseId)
         .populate('students')
-        .populate({
-            path: 'teacherId',
-            select: 'fullName image contact email'
-        })
-        .populate({
-            path: 'assistantId',
-            select: 'fullName image contact email'
-        })
+        .populate({ path: 'teacherId', select: 'fullName image contact email' })
+        .populate({ path: 'assistantId', select: 'fullName image contact email' })
         .lean();
     
     if (!course) {
         throw new Error("Course not found");
     }
 
-    // 2. Fetch all progress records for this course
     const progressRecords = await StudentProgressModel.find({ course: courseId }).lean();
 
-    // 3. Map through all enrolled students
     const studentList = (course.students as any[]).map((student: any) => {
         const progress = progressRecords.find(
             (p) => p.student.toString() === student._id.toString()
         );
 
+    
         if (progress) {
+          
+            const isFreshStudent = 
+                progress.attendanceRate === 0 && 
+                progress.avgGrade === 0 && 
+                progress.overdueRate === 0;
+
             return {
                 _id: progress._id,
                 student: {
@@ -173,7 +318,7 @@ const getStudentListWithStatus = async (courseId: string) => {
                     image: student.image,
                     contact: student.contact
                 },
-                status: progress.status,
+                status: isFreshStudent ? 'on track' : progress.status, 
                 attendanceRate: progress.attendanceRate,
                 avgGrade: progress.avgGrade,
                 homeworkCompletedRate: progress.homeworkCompletedRate,
@@ -182,6 +327,7 @@ const getStudentListWithStatus = async (courseId: string) => {
             };
         }
 
+      
         return {
             student: {
                 _id: student._id,
@@ -198,7 +344,6 @@ const getStudentListWithStatus = async (courseId: string) => {
         };
     });
 
-    // 4. Return both Instructor Info and the Student List
     return {
         instructorInfo: {
             teacher: course.teacherId || null,

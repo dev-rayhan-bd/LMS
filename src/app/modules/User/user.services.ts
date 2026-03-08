@@ -6,6 +6,9 @@ import httpStatus from 'http-status';
 import { UserModel } from "./user.model";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { sendPushNotification } from "../../utils/sendNotification";
+import { CourseModel } from "../Course/course.model";
+import { StudentProgressModel } from "../Report/report.model";
+import { AttendanceModel } from "../Attendence/attendence.model";
 
 
 
@@ -53,15 +56,44 @@ const deletePrifileFromDB = async (id: string) => {
 
   return event; // return deleted user if neededd
 };
-const deleteUserFromDB = async (id: string) => {
-  const event = await UserModel.findByIdAndDelete(id);
 
-  if (!event) {
+const deleteUserFromDB = async (id: string) => {
+
+  const user = await UserModel.findById(id);
+  if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
   }
 
-  return event; // return deleted user if neededd
+
+  if (user.role === 'student') {
+
+    await CourseModel.updateMany(
+      { students: id }, 
+      { 
+        $pull: { students: id }, 
+        $inc: { totalEnrolled: -1 } 
+      }
+    );
+
+   
+    await StudentProgressModel.deleteMany({ student: id });
+    
+ 
+    await AttendanceModel.deleteMany({ student: id });
+  }
+
+
+  if (user.role === 'teacher' || user.role === 'assistant') {
+
+    await CourseModel.updateMany({ teacherId: id }, { $set: { teacherId: null } });
+    await CourseModel.updateMany({ assistantId: id }, { $set: { assistantId: null } });
+  }
+
+  const deletedUser = await UserModel.findByIdAndDelete(id);
+
+  return deletedUser;
 };
+
 const getAllUserFromDB = async (query: Record<string, unknown>) => {
   const queryBuilder = new QueryBuilder(UserModel.find(), query);
   queryBuilder.search(["firstName", "lastName", "email", "role"]).filter().sort().paginate();
