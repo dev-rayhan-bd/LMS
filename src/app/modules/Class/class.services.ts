@@ -15,6 +15,26 @@ const createClassIntoDB = async (payload: IClass) => {
 
   return result;
 };
-const getClassesByCourse = async (courseId: string) => await ClassModel.find({ course: courseId }).sort({ date: 1 });
+const getClassesByCourse = async (courseId: string) => await ClassModel.find({ course: courseId }).sort({ date: 1 }).populate({
+      path: 'createdBy',
+      select: 'fullName image'
+    });
 
 export const ClassServices={createClassIntoDB,getClassesByCourse}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
