@@ -23,10 +23,12 @@ announcementSchema.virtual('comments', {
 
 // 2. Comment Schema
 const commentSchema = new Schema<IComment>({
-  announcementId: { type: Schema.Types.ObjectId, ref: 'Announcement', required: true },
+  announcementId: { type: Schema.Types.ObjectId, ref: 'Announcement' },
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   comment: { type: String, required: true },
-  parentCommentId: { type: Schema.Types.ObjectId, ref: 'Comment', default: null }   //id of student comment
+  parentCommentId: { type: Schema.Types.ObjectId, ref: 'Comment', default: null } , //id of student comment
+    classId: { type: Schema.Types.ObjectId, ref: 'Class', default: null }, 
+  taskId: { type: Schema.Types.ObjectId, ref: 'Task', default: null }
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },

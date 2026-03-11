@@ -14,4 +14,13 @@ const classSchema = new Schema<IClass>({
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 
+classSchema.virtual('comments', {
+  ref: 'Comment',
+  localField: '_id',
+  foreignField: 'classId'
+});
+
+
+classSchema.set('toJSON', { virtuals: true });
+classSchema.set('toObject', { virtuals: true });
 export const ClassModel = model<IClass>('Class', classSchema);

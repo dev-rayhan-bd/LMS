@@ -1,5 +1,6 @@
 import QueryBuilder from "../../builder/QueryBuilder";
 import { sendNotificationToCourse } from "../../utils/sendNotification";
+import { CommentModel } from "../Announcement/announcement.model";
 import { SubmissionModel } from "../Submission/submission.model";
 import { ITask } from "./task.interface";
 import { TaskModel } from "./task.model";
@@ -32,17 +33,101 @@ const getAllTasksFromDB = async (query: Record<string, unknown>) => {
 };
 
 
+// const getTasksByCourseFromDB = async (
+//   courseId: string, 
+//   query: Record<string, unknown>,
+//   userId: string,
+//   role: string
+// ) => {
+//   // 1. Initialize QueryBuilder to fetch tasks
+//   const taskQuery = new QueryBuilder(
+//     TaskModel.find({ course: courseId }).populate({
+//       path: 'createdBy',
+//       select: 'fullName image'
+//     }),
+//     query
+//   )
+//     .search(['title'])
+//     .filter()
+//     .sort()
+//     .paginate()
+//     .fields();
+
+//   const tasks = await taskQuery.modelQuery;
+//   const meta = await taskQuery.countTotal();
+
+//   // 2. Logic for Student or Parent to see userStatus
+//   if (role === 'student' || role === 'parent') {
+    
+//     let targetStudentId = userId;
+
+//     // If it's a parent, they must provide the studentId (child's ID) in query
+//     if (role === 'parent') {
+//       if (!query.studentId) {
+//         return { meta, result: tasks }; // Return tasks without status if no studentId provided
+//       }
+//       targetStudentId = query.studentId as string;
+//     }
+
+//     // Fetch all submissions of the target student for this course
+//     const studentSubmissions = await SubmissionModel.find({ 
+//       student: targetStudentId, 
+//       course: courseId 
+//     }).select('task');
+
+//     const submittedTaskIds = studentSubmissions.map(s => s.task.toString());
+
+//     // Map through tasks and inject the userStatus field
+//     const resultWithStatus = tasks.map((task: any) => {
+//       const taskObj = task.toObject();
+//       const now = new Date();
+      
+//       // Handle potential space or formatting issues in AM/PM time
+//       const endDateTime = new Date(`${task.endDate} ${task.endTime}`);
+
+//       let userStatus = "Due Soon"; // Default status
+
+//       if (submittedTaskIds.includes(task._id.toString())) {
+//         userStatus = "Done";
+//       } else if (now > endDateTime) {
+//         userStatus = "Missing";
+//       }
+
+//       return {
+//         ...taskObj,
+//         userStatus // Injected status for UI
+//       };
+//     });
+
+//     return { meta, result: resultWithStatus };
+//   }
+
+//   // 3. For Teachers/Assistants, return normal results without userStatus
+//   return { meta, result: tasks };
+// };
+
+
 const getTasksByCourseFromDB = async (
   courseId: string, 
   query: Record<string, unknown>,
   userId: string,
   role: string
 ) => {
-  // 1. Initialize QueryBuilder to fetch tasks
+
   const taskQuery = new QueryBuilder(
     TaskModel.find({ course: courseId }).populate({
       path: 'createdBy',
       select: 'fullName image'
+    }) .populate({
+      path: 'comments',
+      match: { parentCommentId: null },
+      populate: [
+        { path: 'user', select: 'fullName image role' }, 
+        { 
+          path: 'replies', 
+          populate: { path: 'user', select: 'fullName image role' } 
+        }
+      ]
     }),
     query
   )
@@ -55,20 +140,31 @@ const getTasksByCourseFromDB = async (
   const tasks = await taskQuery.modelQuery;
   const meta = await taskQuery.countTotal();
 
-  // 2. Logic for Student or Parent to see userStatus
+  const tasksWithComments = await Promise.all(tasks.map(async (task: any) => {
+    const taskObj = task.toObject();
+    const comments = await CommentModel.find({ taskId: task._id, parentCommentId: null })
+      .populate('user', 'fullName image role')
+      .populate({
+        path: 'replies',
+        populate: { path: 'user', select: 'fullName image role' }
+      });
+
+    return { ...taskObj, comments };
+  }));
+
+
   if (role === 'student' || role === 'parent') {
-    
     let targetStudentId = userId;
 
-    // If it's a parent, they must provide the studentId (child's ID) in query
     if (role === 'parent') {
       if (!query.studentId) {
-        return { meta, result: tasks }; // Return tasks without status if no studentId provided
+        
+        return { meta, result: tasksWithComments };
       }
       targetStudentId = query.studentId as string;
     }
 
-    // Fetch all submissions of the target student for this course
+
     const studentSubmissions = await SubmissionModel.find({ 
       student: targetStudentId, 
       course: courseId 
@@ -76,15 +172,11 @@ const getTasksByCourseFromDB = async (
 
     const submittedTaskIds = studentSubmissions.map(s => s.task.toString());
 
-    // Map through tasks and inject the userStatus field
-    const resultWithStatus = tasks.map((task: any) => {
-      const taskObj = task.toObject();
+    const resultWithStatus = tasksWithComments.map((task: any) => {
       const now = new Date();
-      
-      // Handle potential space or formatting issues in AM/PM time
       const endDateTime = new Date(`${task.endDate} ${task.endTime}`);
 
-      let userStatus = "Due Soon"; // Default status
+      let userStatus = "Due Soon"; // Default
 
       if (submittedTaskIds.includes(task._id.toString())) {
         userStatus = "Done";
@@ -93,23 +185,22 @@ const getTasksByCourseFromDB = async (
       }
 
       return {
-        ...taskObj,
-        userStatus // Injected status for UI
+        ...task,
+        userStatus
       };
     });
 
     return { meta, result: resultWithStatus };
   }
 
-  // 3. For Teachers/Assistants, return normal results without userStatus
-  return { meta, result: tasks };
+  
+  return { meta, result: tasksWithComments };
 };
 
 
-
-
-
 // Fetch single task details with conditional submission info
+
+
 const getSingleTaskWithUserStatus = async (taskId: string, userId: string, role: string) => {
   // 1. Fetch the task with teacher details
   const task = await TaskModel.findById(taskId).populate({

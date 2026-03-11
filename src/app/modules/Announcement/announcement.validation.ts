@@ -7,9 +7,12 @@ const createAnnouncementSchema = z.object({
 });
 
 const createCommentSchema = z.object({
-  announcementId: z.string(),
-  comment: z.string(),
-  parentCommentId: z.string().optional(), // Needed when teacher replies
+  comment: z.string("Comment is required"),
+
+  announcementId: z.string().optional(),
+  classId: z.string().optional(),
+  taskId: z.string().optional(),
+  parentCommentId: z.string().optional(),
 });
 
 export const AnnouncementValidations = {

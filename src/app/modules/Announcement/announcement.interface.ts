@@ -9,8 +9,10 @@ export interface IAnnouncement {
 }
 
 export interface IComment {
-  announcementId: Types.ObjectId;
+  announcementId?: Types.ObjectId;
   user: Types.ObjectId;
   comment: string;
   parentCommentId?: Types.ObjectId; // If this exists, it's a reply
+   classId?: Types.ObjectId;       
+  taskId?: Types.ObjectId;   
 }

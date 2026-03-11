@@ -27,4 +27,13 @@ taskSchema.virtual('status').get(function() {
   return now > endDateTime ? 'time over' : 'active';
 });
 
+taskSchema.virtual('comments', {
+  ref: 'Comment',
+  localField: '_id',
+  foreignField: 'taskId'
+});
+
+taskSchema.set('toJSON', { virtuals: true });
+taskSchema.set('toObject', { virtuals: true });
+
 export const TaskModel = model<ITask>('Task', taskSchema);

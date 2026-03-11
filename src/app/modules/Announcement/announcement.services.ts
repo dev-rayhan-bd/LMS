@@ -1,7 +1,9 @@
 import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../errors/AppError";
 import { sendNotificationToCourse, sendPushNotification } from "../../utils/sendNotification";
+import { ClassModel } from "../Class/class.model";
 import { CourseModel } from "../Course/course.model";
+import { TaskModel } from "../Task/task.model";
 import { IAnnouncement, IComment } from "./announcement.interface";
 import { AnnouncementModel, CommentModel } from "./announcement.model";
 import httpStatus from 'http-status';
@@ -54,40 +56,92 @@ const getAnnouncementsByCourseFromDB = async (courseId: string, query: Record<st
   return { meta, result };
 };
 
+// const addCommentIntoDB = async (payload: IComment) => {
+
+
+//       // 1. Validate if the Announcement exists
+//   const isAnnouncementExist = await AnnouncementModel.findById(payload.announcementId);
+//   if (!isAnnouncementExist) {
+//     throw new AppError(httpStatus.NOT_FOUND, "Announcement not found! You cannot comment on a non-existing announcement.");
+//   }
+
+//   // 2. If it's a reply, validate if the parent comment exists
+//   if (payload.parentCommentId) {
+//     const isParentCommentExist = await CommentModel.findById(payload.parentCommentId);
+//     if (!isParentCommentExist) {
+//       throw new AppError(httpStatus.NOT_FOUND, "The comment you are trying to reply to does not exist.");
+//     }
+//   }
+//   const result = await CommentModel.create(payload);
+
+//   // If this is a reply (teacher/assistant replying to a student)
+//   if (payload.parentCommentId) {
+//     const parentComment = await CommentModel.findById(payload.parentCommentId);
+//     if (parentComment) {
+//       await sendPushNotification(
+//         parentComment.user.toString(),
+//         'New Reply on your comment! 💬',
+//         `Teacher replied to your comment in the course announcement.`,
+//         'announcement'
+//       );
+//     }
+//   }
+//   return await result.populate('user', 'fullName image role');
+// };
+
+
+
 const addCommentIntoDB = async (payload: IComment) => {
+ 
+  if (payload.announcementId) {
+    const isAnnouncementExist = await AnnouncementModel.findById(payload.announcementId);
+    if (!isAnnouncementExist) {
+      throw new AppError(httpStatus.NOT_FOUND, "Announcement not found!");
+    }
+  } 
+  else if (payload.classId) {
+    const isClassExist = await ClassModel.findById(payload.classId);
+    if (!isClassExist) {
+      throw new AppError(httpStatus.NOT_FOUND, "Class not found!");
+    }
+  } 
+  else if (payload.taskId) {
+    const isTaskExist = await TaskModel.findById(payload.taskId);
+    if (!isTaskExist) {
+      throw new AppError(httpStatus.NOT_FOUND, "Task not found!");
+    }
+  } 
+  else {
 
-
-      // 1. Validate if the Announcement exists
-  const isAnnouncementExist = await AnnouncementModel.findById(payload.announcementId);
-  if (!isAnnouncementExist) {
-    throw new AppError(httpStatus.NOT_FOUND, "Announcement not found! You cannot comment on a non-existing announcement.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Please provide announcementId, classId, or taskId.");
   }
 
-  // 2. If it's a reply, validate if the parent comment exists
+
   if (payload.parentCommentId) {
     const isParentCommentExist = await CommentModel.findById(payload.parentCommentId);
     if (!isParentCommentExist) {
       throw new AppError(httpStatus.NOT_FOUND, "The comment you are trying to reply to does not exist.");
     }
   }
+
+
   const result = await CommentModel.create(payload);
 
-  // If this is a reply (teacher/assistant replying to a student)
+ 
   if (payload.parentCommentId) {
     const parentComment = await CommentModel.findById(payload.parentCommentId);
     if (parentComment) {
       await sendPushNotification(
         parentComment.user.toString(),
         'New Reply on your comment! 💬',
-        `Teacher replied to your comment in the course announcement.`,
-        'announcement'
+        `Someone replied to your comment.`,
+        'general'
       );
     }
   }
+
   return await result.populate('user', 'fullName image role');
 };
-
-
 
 const deleteAnnouncementFromDB = async (id: string) => {
   await CommentModel.deleteMany({ announcementId: id }); // Delete associated comments first
