@@ -10,7 +10,7 @@ const taskSchema = new Schema<ITask>({
   endDate: { type: String, required: true },
   endTime: { type: String, required: true },
   details: { type: String, required: true },
-  document: { type: String },
+ documents: [{ type: String }],
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { 
   timestamps: true,

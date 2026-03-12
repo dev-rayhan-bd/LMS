@@ -11,7 +11,7 @@ export interface ITask {
   endDate: string;   // YYYY-MM-DD
   endTime: string;   // HH:mm
   details: string;
-  document?: string;
+documents?: string[];
   createdBy: Types.ObjectId;
    status?: 'active' | 'time over';
      createdAt?: Date; 

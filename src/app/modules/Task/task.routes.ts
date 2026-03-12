@@ -15,7 +15,7 @@ const parseBody = (req: Request, res: Response, next: NextFunction) => {
 router.post(
   '/create',
   auth('teacher', 'assistant'),
-  upload.single('document'),
+ upload.array('documents', 10),
   parseBody,
   validateRequest(TaskValidations.createTaskValidationSchema),
   TaskControllers.createTask

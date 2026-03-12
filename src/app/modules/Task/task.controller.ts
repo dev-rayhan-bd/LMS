@@ -6,25 +6,53 @@ import { TaskServices } from "./task.services";
 import AppError from "../../errors/AppError";
 
 
+// const createTask = catchAsync(async (req, res) => {
+//   let pdfUrl;
+//   if (req.file) {
+//     pdfUrl = await uploadImage(req);
+//   }
+
+//   const result = await TaskServices.createTaskIntoDB({
+//     ...req.body,
+//     document: pdfUrl,
+//     createdBy: req.user.userId
+//   });
+
+//   sendResponse(res, {
+//     statusCode: httpStatus.CREATED,
+//     success: true,
+//     message: `${req.body.type} added successfully`,
+//     data: result
+//   });
+// });
+
+
 const createTask = catchAsync(async (req, res) => {
-  let pdfUrl;
-  if (req.file) {
-    pdfUrl = await uploadImage(req);
+  let documents: string[] = [];
+
+ 
+  if (req.files && Array.isArray(req.files)) {
+    const uploadPromises = (req.files as Express.Multer.File[]).map((file) =>
+      uploadImage(req, file) 
+    );
+    documents = await Promise.all(uploadPromises);
   }
 
   const result = await TaskServices.createTaskIntoDB({
     ...req.body,
-    document: pdfUrl,
+    documents: documents, 
     createdBy: req.user.userId
   });
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: `${req.body.type} added successfully`,
+    message: `${req.body.type} added successfully with ${documents.length} documents`,
     data: result
   });
 });
+
+
 
 const getTasksByCourse = catchAsync(async (req, res) => {
   const { courseId } = req.params;
