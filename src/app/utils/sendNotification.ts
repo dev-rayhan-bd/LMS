@@ -25,6 +25,20 @@ export const sendPushNotification = async (
     if (user && user.fcmToken) {
       const payload = {
         notification: { title, body: message },
+             apns: {
+    payload: {
+      aps: {
+        sound: "default", 
+        badge: 1,        
+      },
+    },
+  },
+
+  android: {
+    notification: {
+      sound: "default",
+    },
+  },
         token: user.fcmToken,
       };
       await admin.messaging().send(payload);
