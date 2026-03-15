@@ -1005,23 +1005,46 @@ const getStudentDetailedAttendanceFromDB = async (courseId: string, studentId: s
 };
 
 
+
 const getStudentMarksHistoryFromDB = async (courseId: string, studentId: string) => {
-  const allTasks = await TaskModel.find({ course: courseId }).populate({ path: 'createdBy', select: 'fullName image' }).sort({ createdAt: -1 }).lean();
+  // 1. Get all tasks for this course
+  const allTasks = await TaskModel.find({ course: courseId })
+    .populate({ path: 'createdBy', select: 'fullName image' })
+    .sort({ createdAt: -1 }).lean();
+
+  // 2. Get student submissions for these tasks
   const submissions = await SubmissionModel.find({ course: courseId, student: studentId }).lean();
 
-  return allTasks.map(task => {
+  // 3. Merge data to create the UI format
+  const marksHistory = allTasks.map(task => {
     const submission = submissions.find(s => s.task.toString() === task._id.toString());
+    const now = new Date();
+    const endDateTime = new Date(`${task.endDate} ${task.endTime}`);
+
+    let uiStatus = "Not Submitted";
+    if (submission) {
+      uiStatus = submission.submissionStatus === 'in time' ? "Submitted on time" : "Late submitted";
+    } else if (now > endDateTime) {
+      uiStatus = "Missing";
+    }
+
     return {
       taskId: task._id,
       title: task.title,
       type: task.type,
       deadline: `${task.endDate} ${task.endTime}`,
-      status: submission ? "Submitted" : "Not Submitted",
-      marks: submission?.marks || 0,
+      status: uiStatus,
       isMarked: submission?.isMarked || false,
-      teacher: task.createdBy
+      marks: submission?.marks || 0,
+      feedback: submission?.feedback || null,
+      correctAnswerPdf: submission?.correctAnswerPdf || null,
+      answerPdf: submission?.answerPdf || null,
+      teacher: task.createdBy,
+      postedAt: task.createdAt
     };
   });
+
+  return marksHistory;
 };
 
 const getChildEnrolledCoursesFromDB = async (parentId: string, childId: string) => {
