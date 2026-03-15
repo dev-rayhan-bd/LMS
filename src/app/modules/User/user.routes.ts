@@ -84,6 +84,10 @@ router.patch(
 
 
 router.patch('/assign-parent', auth('student'), UserControllers.assignParent);
-
+router.get(
+  '/my-children',
+  auth(USER_ROLE.parent), 
+  UserControllers.getMyChildren
+);
 
 export const UserRoutes = router;

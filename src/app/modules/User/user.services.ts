@@ -41,7 +41,7 @@ const getMyProfileFromDB = async (id: string) => {
     select: 'fullName image contact email', 
   });
 
-  return result;
+  return result; 
 };
 const getSingleProfileFromDB = async (id: string, ) => {
   const result = await UserModel.findById(id);
@@ -173,10 +173,21 @@ const assignParentToStudentInDB = async (studentId: string, parentId: string) =>
   return result;
 };
 
+
+const getMyChildrenFromDB = async (parentId: string) => {
+  const result = await UserModel.find({ 
+    parentId: parentId, 
+    role: 'student' 
+  }).select('firstName lastName fullName image email contact dob gender');
+
+  return result;
+};
+
+
 export const UserServices = {
   updateProfileFromDB,
   getMyProfileFromDB,
   deletePrifileFromDB,
-  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB,approveUserFromDB,assignParentToStudentInDB
+  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB,approveUserFromDB,assignParentToStudentInDB,getMyChildrenFromDB
 
 };
