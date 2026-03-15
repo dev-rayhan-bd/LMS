@@ -120,6 +120,7 @@ const getClassAttendanceList = catchAsync(async (req, res) => {
 
 
 
+
 export const AttendanceControllers = {
   markAttendance,
   getAllAttendance,

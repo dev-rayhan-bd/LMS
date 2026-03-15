@@ -35,8 +35,11 @@ const updateProfileFromDB = async (id: string, payload: TEditProfile) => {
 
   return result;
 };
-const getMyProfileFromDB = async (id: string, ) => {
-  const result = await UserModel.findById(id);
+const getMyProfileFromDB = async (id: string) => {
+  const result = await UserModel.findById(id).populate({
+    path: 'parentId',
+    select: 'fullName image contact email', 
+  });
 
   return result;
 };
