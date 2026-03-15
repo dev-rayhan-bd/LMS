@@ -68,10 +68,62 @@ const getMyStats = catchAsync(async (req, res) => {
     data: result
   });
 });
+
+
+
+// const getCourseAttendanceList = catchAsync(async (req, res) => {
+//   const { courseId } = req.params;
+//   const { date } = req.query; // date format: YYYY-MM-DD
+
+//   const result = await AttendanceServices.getCourseAttendanceListFromDB(
+//     courseId as string,
+//     date as string || new Date().toISOString().split('T')[0] 
+//   );
+
+//   sendResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: 'Attendance list retrieved successfully',
+//     data: result
+//   });
+// });
+
+
+const getCourseAttendanceList = catchAsync(async (req, res) => {
+
+  const { classId } = req.params; 
+
+  const result = await AttendanceServices.getCourseAttendanceListFromDB(
+    classId as string
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Class attendance list retrieved successfully',
+    data: result
+  });
+});
+
+const getClassAttendanceList = catchAsync(async (req, res) => {
+  const { classId } = req.params; 
+
+  const result = await AttendanceServices.getClassAttendanceListFromDB(classId as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Class student list with attendance status retrieved successfully',
+    data: result,
+  });
+});
+
+
+
 export const AttendanceControllers = {
   markAttendance,
   getAllAttendance,
   getMyAttendance,
   getOverallStats,
-  getMyStats
+  getMyStats,getCourseAttendanceList,getClassAttendanceList
 };

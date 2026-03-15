@@ -37,4 +37,19 @@ router.get(
   auth('student'), 
   AttendanceControllers.getMyStats
 );
+
+
+router.get(
+  '/course-attendance/:classId',
+  auth('teacher', 'assistant', 'superAdmin'),
+  AttendanceControllers.getCourseAttendanceList
+);
+
+router.get(
+  '/class-attendance/:classId',
+  auth('teacher', 'assistant', 'superAdmin'), 
+  AttendanceControllers.getClassAttendanceList
+);
+
+
 export const AttendanceRoutes = router;
