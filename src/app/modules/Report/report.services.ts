@@ -1051,7 +1051,7 @@ const getChildEnrolledCoursesFromDB = async (parentId: string, childId: string) 
   const child = await UserModel.findOne({ _id: childId, parentId: parentId });
   if (!child) throw new AppError(httpStatus.FORBIDDEN, "Unauthorized");
 
-  const courses = await CourseModel.find({ students: childId }).populate({ path: 'teacherId', select: 'fullName' }).lean();
+  const courses = await CourseModel.find({ students: childId }).populate({ path: 'teacherId', select: 'fullName image' }).populate({ path: 'assistantId', select: 'fullName image' }).lean();
   return { childInfo: child, enrolledCourses: courses };
 };
 
