@@ -12,7 +12,7 @@ router.get('/my-report/:courseId', auth('student'), ReportControllers.getMyRepor
 router.get('/course-overview/:courseId', auth('teacher', 'assistant'), ReportControllers.getCourseOverview);
 
 // Teacher access for Student Status List (Image 2)
-router.get('/student-list/:courseId', auth('teacher', 'assistant'), ReportControllers.getCourseStudentsStatus);
+router.get('/student-list/:courseId', auth('teacher', 'assistant','student'), ReportControllers.getCourseStudentsStatus);
 
 router.get(
   '/overall-stats/:courseId',
