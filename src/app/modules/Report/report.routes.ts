@@ -75,14 +75,14 @@ router.get(
 
 router.get(
   '/student-marks/:courseId/:studentId',
-  auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.superAdmin),
+  auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.superAdmin,USER_ROLE.parent),
   ReportControllers.getStudentMarksHistory
 );
 
 
 router.get(
   '/student-attendance/:courseId/:studentId',
-  auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.superAdmin),
+  auth(USER_ROLE.teacher, USER_ROLE.assistant, USER_ROLE.superAdmin,USER_ROLE.parent),
   ReportControllers.getStudentAttendanceHistory
 );
 
