@@ -39,7 +39,7 @@ router.get(
 
 router.get(
   '/view-progress/:courseId/:studentId',
-  auth('teacher', 'assistant', 'superAdmin'),
+  auth('teacher', 'assistant', 'superAdmin','student'),
   ReportControllers.getStudentProgressForInstructors
 );
 
