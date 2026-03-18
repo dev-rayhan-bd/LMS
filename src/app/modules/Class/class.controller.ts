@@ -30,7 +30,12 @@ const createClass = catchAsync(async (req, res) => {
 });
 const getClassesByCourse = catchAsync(async (req, res) => {
 
-  const result = await ClassServices.getClassesByCourse(req.params.courseId as string);
+ const { courseId } = req.params;
+
+  const result = await ClassServices.getClassesByCourse(
+    courseId as string, 
+    req.query 
+  );
   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Courses retrieved', data: result });
 });
 

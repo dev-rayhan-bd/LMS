@@ -1,3 +1,4 @@
+import QueryBuilder from "../../builder/QueryBuilder";
 import { sendNotificationToCourse } from "../../utils/sendNotification";
 import { CommentModel } from "../Announcement/announcement.model";
 import { IClass } from "./class.interface";
@@ -16,40 +17,76 @@ const createClassIntoDB = async (payload: IClass) => {
 
   return result;
 };
-// const getClassesByCourse = async (courseId: string) => await ClassModel.find({ course: courseId }).sort({ date: 1 }).populate({
-//       path: 'createdBy',
-//       select: 'fullName image'
-//     });
-const getClassesByCourse = async (courseId: string) => {
-  const classes = await ClassModel.find({ course: courseId })
-    .populate('createdBy', 'fullName image') .populate({
+
+// const getClassesByCourse = async (courseId: string) => {
+//   const classes = await ClassModel.find({ course: courseId })
+//     .populate('createdBy', 'fullName image') .populate({
+//       path: 'comments',
+//       match: { parentCommentId: null },
+//       populate: [
+//         { path: 'user', select: 'fullName image role' }, 
+//         { 
+//           path: 'replies', 
+//           populate: { path: 'user', select: 'fullName image role' } 
+//         }
+//       ]
+//     })
+//     .sort({ date: 1 })
+//     .lean();
+
+
+//   const results = await Promise.all(classes.map(async (cls) => {
+//     const comments = await CommentModel.find({ classId: cls._id, parentCommentId: null })
+//       .populate('user', 'fullName image role')
+//       .populate({
+//         path: 'replies',
+//         populate: { path: 'user', select: 'fullName image role' }
+//       });
+    
+//     return { ...cls, comments };
+//   }));
+
+//   return results;
+// };
+
+const getClassesByCourse = async (courseId: string, query: Record<string, unknown>) => {
+
+  const classQuery = new QueryBuilder(
+    ClassModel.find({ course: courseId }), 
+    query
+  )
+    .search(['title', 'details']) 
+    .filter()
+    .sort() 
+    .paginate()
+    .fields();
+
+ 
+  classQuery.modelQuery.populate([
+    { 
+      path: 'createdBy', 
+      select: 'fullName image' 
+    },
+    {
       path: 'comments',
-      match: { parentCommentId: null },
+      match: { parentCommentId: null }, 
       populate: [
-        { path: 'user', select: 'fullName image role' }, 
-        { 
+        { path: 'user', select: 'fullName image role' },
+        {
           path: 'replies', 
-          populate: { path: 'user', select: 'fullName image role' } 
+          populate: { path: 'user', select: 'fullName image role' }
         }
       ]
-    })
-    .sort({ date: 1 })
-    .lean();
+    }
+  ]);
 
 
-  const results = await Promise.all(classes.map(async (cls) => {
-    const comments = await CommentModel.find({ classId: cls._id, parentCommentId: null })
-      .populate('user', 'fullName image role')
-      .populate({
-        path: 'replies',
-        populate: { path: 'user', select: 'fullName image role' }
-      });
-    
-    return { ...cls, comments };
-  }));
+  const result = await classQuery.modelQuery;
+  const meta = await classQuery.countTotal();
 
-  return results;
+  return { meta, result };
 };
+
 export const ClassServices={createClassIntoDB,getClassesByCourse}
 
 
