@@ -15,6 +15,7 @@ import { ReportRoutes } from "../modules/Report/report.routes";
 import { NotificationRoutes } from "../modules/Notification/notification.routes";
 import { AnnouncementRoutes } from "../modules/Announcement/announcement.routes";
 import { AdminRoutes } from "../modules/Admin/admin.routes";
+import { ZoomRoutes } from "../modules/Zoom/zoom.routes";
 
 const router = Router();
 
@@ -82,6 +83,10 @@ const moduleRoutes = [
   {
     path: '/dashboard',
     route: AdminRoutes
+  },
+    {
+    path: "/zoom", 
+    route: ZoomRoutes,
   },
 ];
 

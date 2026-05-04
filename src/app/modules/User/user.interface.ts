@@ -24,7 +24,9 @@ export interface TUser {
   fcmToken: string;
   passwordChangedAt?: Date;
   role: TUserRole;
-
+zoomAccessToken?: string;
+  zoomRefreshToken?: string;
+  zoomTokenExpiresAt?: Date;
 
   createdAt?: Date;
   updatedAt?: Date;

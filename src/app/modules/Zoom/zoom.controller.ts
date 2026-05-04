@@ -1,33 +1,53 @@
-// src/app/modules/Zoom/zoom.controller.ts
-
 import crypto from 'crypto';
-import catchAsync from '../../utils/catchAsync';
 import { Request, Response } from 'express';
+import catchAsync from '../../utils/catchAsync';
+import sendResponse from '../../utils/sendResponse';
+import httpStatus from 'http-status';
+import { ZoomServices } from './zoom.services';
+
+const zoomCallback = catchAsync(async (req: Request, res: Response) => {
+  const { code, state } = req.query; // state 
+
+  if (!code || !state) {
+    return res.status(400).send("Invalid request: missing code or state.");
+  }
+
+  await ZoomServices.exchangeCodeForToken(state as string, code as string);
+
+
+  res.send(`
+    <html>
+      <body style="display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
+        <div style="text-align:center;">
+          <h2 style="color: green;">Zoom Connected Successfully! 🎉</h2>
+          <p>You can now close this tab and return to the app.</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
 
 const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
   const { event, payload } = req.body;
 
-//zoom url validation logic
   if (event === 'endpoint.url_validation') {
-    const plainToken = payload.plainToken;
-    const secretToken = process.env.ZOOM_WEBHOOK_SECRET_TOKEN; 
-
     const hash = crypto
-      .createHmac('sha256', secretToken!)
-      .update(plainToken)
+      .createHmac('sha256', process.env.ZOOM_WEBHOOK_SECRET_TOKEN!)
+      .update(payload.plainToken)
       .digest('hex');
 
     return res.status(200).json({
-      plainToken: plainToken,
+      plainToken: payload.plainToken,
       signature: hash,
     });
   }
 
 
-  if (event === 'meeting.participant_joined') {
-     // save participant info to database
-     console.log('Participant joined:', payload.object.participant);
-  }
-
   res.status(200).send();
 });
+
+export const ZoomControllers = {
+  handleZoomWebhook,
+  zoomCallback,
+};

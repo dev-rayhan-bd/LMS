@@ -43,6 +43,9 @@ const userSchema = new Schema<TUser, User, IUserMethods>(
   enum: ["student", "teacher", "assistant","parent","superAdmin"], 
  
 },
+zoomAccessToken: { type: String },
+  zoomRefreshToken: { type: String },
+  zoomTokenExpiresAt: { type: Date },
   parentId: { 
       type: Schema.Types.ObjectId, 
       ref: 'User',
