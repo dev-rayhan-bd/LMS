@@ -5,7 +5,7 @@ import httpStatus from 'http-status';
 
 const ZOOM_OAUTH_ENDPOINT = 'https://zoom.us/oauth/token';
 
-// ১. জুম থেকে টোকেন সংগ্রহ (OAuth Callback এর সময়)
+
 const exchangeCodeForToken = async (userId: string, code: string) => {
   const auth = Buffer.from(`${process.env.ZOOM_CLIENT_ID}:${process.env.ZOOM_CLIENT_SECRET}`).toString('base64');
   const response = await axios.post(ZOOM_OAUTH_ENDPOINT, null, {
@@ -26,12 +26,12 @@ const exchangeCodeForToken = async (userId: string, code: string) => {
   });
 };
 
-// ২. টোকেন অটো-রিফ্রেশ লজিক
+// token auto refresh logic when access token is about to expire (within 5 minutes) or already expired
 const getValidAccessToken = async (userId: string) => {
   const user = await UserModel.findById(userId);
   if (!user || !user.zoomRefreshToken) throw new AppError(httpStatus.UNAUTHORIZED, "Zoom not connected");
 
-  // যদি টোকেন এক্সপায়ার হতে ৫ মিনিটের কম থাকে
+  //if access token is still valid for more than 5 minutes, return it
   if (user.zoomTokenExpiresAt && user.zoomTokenExpiresAt > new Date(Date.now() + 5 * 60 * 1000)) {
     return user.zoomAccessToken;
   }
@@ -51,7 +51,7 @@ const getValidAccessToken = async (userId: string) => {
   return access_token;
 };
 
-// ৩. অটোমেটিক জুম মিটিং তৈরি করা
+
 const createZoomMeeting = async (userId: string, classTitle: string, startTime: string) => {
   const token = await getValidAccessToken(userId);
   const response = await axios.post('https://api.zoom.us/v2/users/me/meetings', {
@@ -60,10 +60,13 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
     start_time: startTime,
     duration: 60,
     settings: {
-      host_video: true,
-      participant_video: true,
-      join_before_host: false, // টিচার আগে ঢুকলে তবেই স্টুডেন্ট ঢুকবে
-      auto_recording: 'cloud'  // অটোমেটিক রেকর্ডিং অন
+   
+      join_before_host: false, 
+  waiting_room: true,      
+  host_video: true,
+  participant_video: true,
+  mute_upon_entry: true,
+  auto_recording: 'cloud'
     }
   }, {
     headers: { Authorization: `Bearer ${token}` }
