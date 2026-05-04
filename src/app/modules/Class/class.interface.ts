@@ -8,5 +8,10 @@ export interface IClass {
   details: string;
  documents?: string[];
   link: string;
+  zoomMeetingId: string;
+zoomStatus: 'scheduled' | 'started' | 'ended' | 'recorded';
+recordingLink: string;
+
+
   createdBy: Types.ObjectId;
 }

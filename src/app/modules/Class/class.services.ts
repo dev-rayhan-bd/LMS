@@ -1,53 +1,60 @@
+import mongoose from "mongoose";
 import QueryBuilder from "../../builder/QueryBuilder";
 import { sendNotificationToCourse } from "../../utils/sendNotification";
 import { CommentModel } from "../Announcement/announcement.model";
+import { ZoomServices } from "../Zoom/zoom.services";
 import { IClass } from "./class.interface";
 import { ClassModel } from "./class.model";
 
-const createClassIntoDB = async (payload: IClass) => {
+// const createClassIntoDB = async (payload: IClass) => {
+//   const result = await ClassModel.create(payload);
+
+//   // Notify all students in the course
+//   await sendNotificationToCourse(
+//     payload.course.toString(),
+//     'New Class Scheduled! 📚',
+//     `Class "${payload.title}" is scheduled on ${payload.date} at ${payload.time}.`,
+//     'class'
+//   );
+
+//   return result;
+// };
+const createClassIntoDB = async (payload: Partial<IClass>, userId: string) => {
+
+  if ((payload as any).isZoomMeeting) {
+
+  
+    const zoomData = await ZoomServices.createZoomMeeting(
+      userId, 
+      payload.title as string, 
+      payload.date as any 
+    );
+
+
+    payload.link = zoomData.join_url;
+    payload.zoomMeetingId = zoomData.id;
+    payload.zoomStatus = 'scheduled';
+  }
+
+
+  payload.createdBy = new mongoose.Types.ObjectId(userId) as any;
+
+
   const result = await ClassModel.create(payload);
 
-  // Notify all students in the course
-  await sendNotificationToCourse(
-    payload.course.toString(),
-    'New Class Scheduled! 📚',
-    `Class "${payload.title}" is scheduled on ${payload.date} at ${payload.time}.`,
-    'class'
-  );
+
+  if (result) {
+    await sendNotificationToCourse(
+      result.course.toString(),
+      'New Class Scheduled! 📚',
+      `Class "${result.title}" is scheduled on ${result.date} at ${result.time}.`,
+      'class'
+    );
+  }
 
   return result;
 };
 
-// const getClassesByCourse = async (courseId: string) => {
-//   const classes = await ClassModel.find({ course: courseId })
-//     .populate('createdBy', 'fullName image') .populate({
-//       path: 'comments',
-//       match: { parentCommentId: null },
-//       populate: [
-//         { path: 'user', select: 'fullName image role' }, 
-//         { 
-//           path: 'replies', 
-//           populate: { path: 'user', select: 'fullName image role' } 
-//         }
-//       ]
-//     })
-//     .sort({ date: 1 })
-//     .lean();
-
-
-//   const results = await Promise.all(classes.map(async (cls) => {
-//     const comments = await CommentModel.find({ classId: cls._id, parentCommentId: null })
-//       .populate('user', 'fullName image role')
-//       .populate({
-//         path: 'replies',
-//         populate: { path: 'user', select: 'fullName image role' }
-//       });
-    
-//     return { ...cls, comments };
-//   }));
-
-//   return results;
-// };
 
 const getClassesByCourse = async (courseId: string, query: Record<string, unknown>) => {
 

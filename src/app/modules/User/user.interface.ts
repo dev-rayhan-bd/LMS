@@ -27,6 +27,7 @@ export interface TUser {
 zoomAccessToken?: string;
   zoomRefreshToken?: string;
   zoomTokenExpiresAt?: Date;
+  isZoomConnected?: boolean;
 
   createdAt?: Date;
   updatedAt?: Date;

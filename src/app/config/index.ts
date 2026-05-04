@@ -20,5 +20,9 @@ export default {
   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEYS,
   cloudinary_api_secret: process.env.CLOUDINARY_SECRET_KEYS,
+  zoom_client_id: process.env.ZOOM_CLIENT_ID,
+  zoom_client_secret: process.env.ZOOM_CLIENT_SECRET,
+  zoom_redirect_url: process.env.ZOOM_REDIRECT_URL,
+  zoom_webhook_secret: process.env.ZOOM_WEBHOOK_SECRET,
 
 };
