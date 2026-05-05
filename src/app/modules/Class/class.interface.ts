@@ -11,7 +11,7 @@ export interface IClass {
   zoomMeetingId: string;
 zoomStatus: 'scheduled' | 'started' | 'ended' | 'recorded';
 recordingLink: string;
-
+startUrl: string;
 
   createdBy: Types.ObjectId;
 }

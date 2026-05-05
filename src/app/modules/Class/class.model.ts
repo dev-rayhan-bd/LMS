@@ -19,6 +19,7 @@ zoomStatus: {
     default: 'scheduled' 
 },
 recordingLink: { type: String, default: null },
+startUrl: { type: String, default: null },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 

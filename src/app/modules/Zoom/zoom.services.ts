@@ -71,7 +71,11 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
   }, {
     headers: { Authorization: `Bearer ${token}` }
   });
-  return response.data;
+  return {
+    join_url: response.data.join_url,
+    start_url: response.data.start_url, 
+    id: response.data.id
+  };
 };
 
 export const ZoomServices = { exchangeCodeForToken, getValidAccessToken, createZoomMeeting };

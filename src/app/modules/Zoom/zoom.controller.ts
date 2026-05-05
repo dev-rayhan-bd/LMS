@@ -94,18 +94,29 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
   }
 
 
-  if (event === 'recording.completed') {
-    const playUrl = payload.object.share_url; 
-    await ClassModel.findOneAndUpdate(
-      { zoomMeetingId: meetingId },
-      { 
-        recordingLink: playUrl, 
-        zoomStatus: 'recorded' 
-      }
-    );
-    console.log(`[Recording] Saved for meeting: ${meetingId}`);
-  }
 
+if (event === 'recording.completed') {
+
+  const meetingId = payload.object.id.toString();
+  const playUrl = payload.object.share_url; 
+
+  const updatedClass = await ClassModel.findOneAndUpdate(
+    
+    { zoomMeetingId: meetingId },
+    { 
+      recordingLink: playUrl, 
+      zoomStatus: 'recorded' 
+    },
+    { new: true }
+    
+  );
+
+  if (updatedClass) {
+    console.log(`[Success] Recording link saved for Class: ${updatedClass.title}`);
+  } else {
+    console.log(`[Error] Class not found for Meeting ID: ${meetingId}`);
+  }
+}
 
   res.status(200).send();
 });

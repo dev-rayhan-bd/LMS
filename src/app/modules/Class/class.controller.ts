@@ -58,17 +58,32 @@ const createClass = catchAsync(async (req, res) => {
     data: result,
   });
 });
-const getClassesByCourse = catchAsync(async (req, res) => {
+// const getClassesByCourse = catchAsync(async (req, res) => {
 
- const { courseId } = req.params;
+//  const { courseId } = req.params;
+
+//   const result = await ClassServices.getClassesByCourse(
+//     courseId as string, 
+//     req.query 
+//   );
+//   sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Courses retrieved', data: result });
+// });
+const getClassesByCourse = catchAsync(async (req, res) => {
+  const { courseId } = req.params;
 
   const result = await ClassServices.getClassesByCourse(
     courseId as string, 
-    req.query 
+    req.query,
+    req.user.role 
   );
-  sendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Courses retrieved', data: result });
-});
 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Classes retrieved successfully',
+    data: result,
+  });
+})
 
 
 

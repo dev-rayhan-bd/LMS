@@ -33,6 +33,7 @@ const createClassIntoDB = async (payload: Partial<IClass>, userId: string) => {
 
     payload.link = zoomData.join_url;
     payload.zoomMeetingId = zoomData.id;
+     payload.startUrl = zoomData.start_url;
     payload.zoomStatus = 'scheduled';
   }
 
@@ -56,7 +57,50 @@ const createClassIntoDB = async (payload: Partial<IClass>, userId: string) => {
 };
 
 
-const getClassesByCourse = async (courseId: string, query: Record<string, unknown>) => {
+// const getClassesByCourse = async (courseId: string, query: Record<string, unknown>) => {
+
+//   const classQuery = new QueryBuilder(
+//     ClassModel.find({ course: courseId }), 
+//     query
+//   )
+//     .search(['title', 'details']) 
+//     .filter()
+//     .sort() 
+//     .paginate()
+//     .fields();
+
+ 
+//   classQuery.modelQuery.populate([
+//     { 
+//       path: 'createdBy', 
+//       select: 'fullName image' 
+//     },
+//     {
+//       path: 'comments',
+//       match: { parentCommentId: null }, 
+//       populate: [
+//         { path: 'user', select: 'fullName image role' },
+//         {
+//           path: 'replies', 
+//           populate: { path: 'user', select: 'fullName image role' }
+//         }
+//       ]
+//     }
+//   ]);
+
+
+//   const result = await classQuery.modelQuery;
+//   const meta = await classQuery.countTotal();
+
+//   return { meta, result };
+// };
+
+
+const getClassesByCourse = async (
+  courseId: string, 
+  query: Record<string, unknown>,
+  role: string
+) => {
 
   const classQuery = new QueryBuilder(
     ClassModel.find({ course: courseId }), 
@@ -68,12 +112,13 @@ const getClassesByCourse = async (courseId: string, query: Record<string, unknow
     .paginate()
     .fields();
 
- 
+
+  if (role === 'student') {
+    classQuery.modelQuery.select('-startUrl');
+  }
+
   classQuery.modelQuery.populate([
-    { 
-      path: 'createdBy', 
-      select: 'fullName image' 
-    },
+    { path: 'createdBy', select: 'fullName image' },
     {
       path: 'comments',
       match: { parentCommentId: null }, 
@@ -86,7 +131,6 @@ const getClassesByCourse = async (courseId: string, query: Record<string, unknow
       ]
     }
   ]);
-
 
   const result = await classQuery.modelQuery;
   const meta = await classQuery.countTotal();
