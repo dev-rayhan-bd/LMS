@@ -11,17 +11,20 @@ import { ZoomServices } from './zoom.services';
 /**
  * zoom webhook handler (for attendance and status updates)
  */
+
+
 const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
   const { event, payload } = req.body;
+
+  console.log("Received Webhook Event:", event);
+
 
   if (event === 'endpoint.url_validation') {
     const plainToken = payload.plainToken;
     const secretToken = config.zoom_webhook_secret;
-  console.log("Token from config:", secretToken); 
-  console.log("Plain Token from Zoom:", payload.plainToken);
+
     if (!secretToken) {
-      console.error("ZOOM_WEBHOOK_SECRET is missing in .env");
-      return res.status(httpStatus.INTERNAL_SERVER_ERROR).send();
+      return res.status(httpStatus.INTERNAL_SERVER_ERROR).send("Secret missing");
     }
 
     const hash = crypto
@@ -35,15 +38,19 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
     });
   }
 
- 
-  const meetingId = payload.object.id.toString();
+
+  if (!payload || !payload.object) {
+    return res.status(200).send("No action needed for this event structure.");
+  }
 
 
-  if (event === 'meeting.participant_joined') {
+  const meetingId = payload.object.id?.toString();
+
+
+  if (event === 'meeting.participant_joined' && meetingId) {
     const participant = payload.object.participant;
     const studentEmail = participant.user_email;
     const joinTime = new Date(participant.join_time);
-
 
     const [targetClass, student] = await Promise.all([
       ClassModel.findOne({ zoomMeetingId: meetingId }),
@@ -51,19 +58,14 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
     ]);
 
     if (targetClass && student) {
-      // --- Late Logic  ---
-  
       const classDateStr = targetClass.date.toISOString().split('T')[0];
       const scheduledStartTime = new Date(`${classDateStr} ${targetClass.time}`);
-      
-      // 15 min buffer time
       const bufferThreshold = new Date(scheduledStartTime.getTime() + 15 * 60000);
 
       let attendanceStatus: 'on time' | 'late' = 'on time';
       if (joinTime > bufferThreshold) {
         attendanceStatus = 'late';
       }
-      // --- Late Logic ---
 
       await AttendanceModel.findOneAndUpdate(
         { class: targetClass._id, student: student._id },
@@ -71,56 +73,37 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
           class: targetClass._id,
           course: targetClass.course,
           student: student._id,
-          status: attendanceStatus, // 'on time' or 'late'
+          status: attendanceStatus,
           date: classDateStr,
           time: joinTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
           markedBy: targetClass.createdBy
         },
         { upsert: true, new: true }
       );
-      console.log(`[Attendance] ${student.fullName} marked as ${attendanceStatus}`);
     }
   }
 
-  // (Live Status Update)
-  if (event === 'meeting.started') {
-    await ClassModel.findOneAndUpdate({ zoomMeetingId: meetingId }, { zoomStatus: 'started' });
-    console.log(`[Status] Meeting ${meetingId} started.`);
+
+  if (meetingId) {
+    if (event === 'meeting.started') {
+      await ClassModel.findOneAndUpdate({ zoomMeetingId: meetingId }, { zoomStatus: 'started' });
+    }
+    if (event === 'meeting.ended') {
+      await ClassModel.findOneAndUpdate({ zoomMeetingId: meetingId }, { zoomStatus: 'ended' });
+    }
+    if (event === 'recording.completed') {
+      const playUrl = payload.object.share_url; 
+      await ClassModel.findOneAndUpdate(
+        { zoomMeetingId: meetingId },
+        { recordingLink: playUrl, zoomStatus: 'recorded' }
+      );
+    }
   }
-
-  
-  if (event === 'meeting.ended') {
-    await ClassModel.findOneAndUpdate({ zoomMeetingId: meetingId }, { zoomStatus: 'ended' });
-    console.log(`[Status] Meeting ${meetingId} ended.`);
-  }
-
-
-
-if (event === 'recording.completed') {
-
-  const meetingId = payload.object.id.toString();
-  const playUrl = payload.object.share_url; 
-
-  const updatedClass = await ClassModel.findOneAndUpdate(
-    
-    { zoomMeetingId: meetingId },
-    { 
-      recordingLink: playUrl, 
-      zoomStatus: 'recorded' 
-    },
-    { new: true }
-    
-  );
-
-  if (updatedClass) {
-    console.log(`[Success] Recording link saved for Class: ${updatedClass.title}`);
-  } else {
-    console.log(`[Error] Class not found for Meeting ID: ${meetingId}`);
-  }
-}
 
   res.status(200).send();
 });
+
+
 
 /**
  * zoom oAUTH connection
