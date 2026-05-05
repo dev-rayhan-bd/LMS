@@ -17,7 +17,8 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
   if (event === 'endpoint.url_validation') {
     const plainToken = payload.plainToken;
     const secretToken = config.zoom_webhook_secret;
-
+  console.log("Token from config:", secretToken); 
+  console.log("Plain Token from Zoom:", payload.plainToken);
     if (!secretToken) {
       console.error("ZOOM_WEBHOOK_SECRET is missing in .env");
       return res.status(httpStatus.INTERNAL_SERVER_ERROR).send();
