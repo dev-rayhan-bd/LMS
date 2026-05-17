@@ -177,6 +177,42 @@ const verifyYourOTP = catchAsync(async (req:Request, res:Response) => {
     });
   });
 
+
+
+const accountDeletionPage = catchAsync(async (req: Request, res: Response) => {
+  res.status(200).send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Account Deletion Request</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; max-width: 400px; width: 90%; }
+            .icon { font-size: 50px; color: #4CAF50; margin-bottom: 20px; }
+            h1 { color: #333; margin: 0 0 10px; font-size: 24px; }
+            p { color: #666; font-size: 16px; line-height: 1.5; margin: 0 0 20px; }
+            .footer { font-size: 14px; color: #999; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="icon">✓</div>
+            <h1>Request Received</h1>
+            <p>Your account will be deleted soon.</p>
+            <p class="footer">If this was a mistake, please contact our support team immediately.</p>
+        </div>
+    </body>
+    </html>
+  `);
+});
+
+
+
+
+
+
 export const AuthControllers = {
-  registerUser,userLogin,changePassword,refreshToken,forgotPassword,verifyYourOTP,resetPassword,VerifyOtpForRegistration,resendOtp,AdminLogin
+  registerUser,userLogin,changePassword,refreshToken,forgotPassword,verifyYourOTP,resetPassword,VerifyOtpForRegistration,resendOtp,AdminLogin,accountDeletionPage
 };
