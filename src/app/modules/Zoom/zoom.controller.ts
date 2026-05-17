@@ -153,11 +153,31 @@ const zoomCallback = catchAsync(async (req: Request, res: Response) => {
   await ZoomServices.exchangeCodeForToken(state as string, code as string);
 
   res.send(`
-    <div style="text-align:center; padding: 50px; font-family: sans-serif;">
-      <h1 style="color: #2D8CFF;">Educology Zoom Integration</h1>
-      <p style="font-size: 18px; color: #4CAF50;">Success! Your Zoom account is now connected.</p>
-      <p>You can close this tab and return to the app.</p>
-    </div>
+    <html>
+      <head>
+        <title>Zoom Connected</title>
+        <style>
+          body { display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; text-align: center; }
+          h1 { color: #2D8CFF; }
+          p { color: #4CAF50; font-size: 18px; }
+        </style>
+        <script>
+       
+          setTimeout(function() {
+            window.location.href = "educology://zoom-success"; 
+          }, 2000);
+        </script>
+      </head>
+      <body>
+        <div>
+          <h1>Educology Zoom Integration</h1>
+          <p>Success! Your Zoom account is now connected.</p>
+          <p>Redirecting you back to the app...</p>
+          <br>
+          <a href="educology://zoom-success" style="text-decoration: none; color: blue;">Click here if you are not redirected automatically</a>
+        </div>
+      </body>
+    </html>
   `);
 });
 
