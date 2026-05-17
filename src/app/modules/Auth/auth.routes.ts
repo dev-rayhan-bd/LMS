@@ -71,6 +71,9 @@ router.post(
   validateRequest(AuthValidation.verifyOtpSchema),
   AuthControllers.VerifyOtpForRegistration,
 );
-
+router.get(
+  '/account-deletion-request',
+  AuthControllers.accountDeletionPage
+);
 
 export const AuthRoutes = router;
