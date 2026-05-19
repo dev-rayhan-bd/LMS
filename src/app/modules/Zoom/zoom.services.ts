@@ -67,6 +67,7 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
   participant_video: true,
   mute_upon_entry: true,
   auto_recording: 'cloud',
+  meeting_authentication: true,
    authentication_option: 'sign_in_with_zoom'
     }
   }, {
