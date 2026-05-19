@@ -53,6 +53,7 @@ const getValidAccessToken = async (userId: string) => {
 
 
 const createZoomMeeting = async (userId: string, classTitle: string, startTime: string) => {
+  
   const token = await getValidAccessToken(userId);
   const response = await axios.post('https://api.zoom.us/v2/users/me/meetings', {
     topic: classTitle,
@@ -68,7 +69,7 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
   mute_upon_entry: true,
   auto_recording: 'cloud',
   meeting_authentication: true,
-   authentication_option: 'sign_in_with_zoom'
+  //  authentication_option: 'sign_in_with_zoom'
     }
   }, {
     headers: { Authorization: `Bearer ${token}` }
