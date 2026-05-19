@@ -66,7 +66,8 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
   host_video: true,
   participant_video: true,
   mute_upon_entry: true,
-  auto_recording: 'cloud'
+  auto_recording: 'cloud',
+   authentication_option: 'sign_in_with_zoom'
     }
   }, {
     headers: { Authorization: `Bearer ${token}` }

@@ -25,6 +25,7 @@ router.patch('/add-student/:id', auth(USER_ROLE.superAdmin), CourseControllers.a
 router.patch('/remove-student/:id', auth(USER_ROLE.superAdmin), CourseControllers.removeStudent);
 
 router.delete('/delete/:id', auth(USER_ROLE.superAdmin), CourseControllers.deleteCourse);
+
 router.patch(
   '/add-students/:id', 
   auth(USER_ROLE.superAdmin), 

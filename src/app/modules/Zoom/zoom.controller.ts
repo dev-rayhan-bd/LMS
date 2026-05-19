@@ -16,7 +16,9 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
   const { event, payload } = req.body;
 
   console.log("Received Webhook Event:", event);
-
+  console.log("-----------------------------------------");
+  console.log("🚩 ZOOM_WEBHOOK_RECEIVED:", event);
+  console.log("🔍 FULL_PAYLOAD:", JSON.stringify(req.body, null, 2));
   // if (event === 'endpoint.url_validation') {
   //   const plainToken = payload.plainToken;
   //   // const secretToken = config.zoom_webhook_secret;
@@ -64,6 +66,7 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
   }
 
   if (!payload || !payload.object) {
+      console.log("⚠️ WEBHOOK_WARNING: No payload object found");
     return res.status(200).send("No action needed for this event structure.");
   }
 
@@ -73,13 +76,19 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
     const participant = payload.object.participant;
     const studentEmail = participant.user_email;
     const joinTime = new Date(participant.join_time);
-
+ console.log("📧 LOOKING_FOR_STUDENT_EMAIL:", studentEmail);
+    console.log("🆔 MEETING_ID_FROM_ZOOM:", meetingId);
+      if (!studentEmail) {
+      console.log("❌ CRITICAL: Zoom did not send user_email. Attendance cannot be marked!");
+    }
     const [targetClass, student] = await Promise.all([
       ClassModel.findOne({ zoomMeetingId: meetingId }),
       UserModel.findOne({ email: studentEmail, role: "student" }),
     ]);
-
+    if (!targetClass) console.log("❌ DB_ERROR: Class not found for ID:", meetingId);
+    if (!student) console.log("❌ DB_ERROR: Student not found with email:", studentEmail);
     if (targetClass && student) {
+       console.log("✅ SUCCESS: Found Class and Student. Marking Attendance now...");
       const classDateStr = targetClass.date.toISOString().split("T")[0];
       const scheduledStartTime = new Date(
         `${classDateStr} ${targetClass.time}`,
