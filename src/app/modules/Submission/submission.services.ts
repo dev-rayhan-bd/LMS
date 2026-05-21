@@ -9,6 +9,18 @@ import QueryBuilder from "../../builder/QueryBuilder";
 const submitTaskIntoDB = async (payload: Partial<ISubmission>) => {
   const task = await TaskModel.findById(payload.task);
   if (!task) throw new AppError(httpStatus.NOT_FOUND, "Task not found");
+  const isAlreadySubmitted = await SubmissionModel.findOne({ 
+    task: payload.task, 
+    student: payload.student 
+  });
+
+  if (isAlreadySubmitted) {
+
+    throw new AppError(
+        httpStatus.BAD_REQUEST, 
+        "You have already submitted this homework/exam. You cannot submit it again."
+    );
+  }
 
   const now = new Date();
   const endDateTime = new Date(`${task.endDate}T${task.endTime}`);
