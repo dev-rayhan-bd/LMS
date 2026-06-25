@@ -75,7 +75,7 @@ export const registerUserValidationSchema = z.object({
 
   email: emailSchema,
 
-  contact: contactSchema,
+  contact: contactSchema.optional(),
   role: z.enum(["superAdmin", "teacher", "assistant", "parent", "student"]),
   password: passwordSchema,
 });
@@ -95,6 +95,7 @@ export const editProfileSchema = z.object({
     .max(50, "Last name cannot exceed 50 characters")
     .optional(),
 
+    
   contact: contactSchema.optional(),
   gender: z.enum(["male", "female", "others"]).optional(),
   about: z
