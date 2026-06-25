@@ -15,7 +15,7 @@ const userSchema = new Schema<TUser, User, IUserMethods>(
     gender: { type: String },
     about: { type: String },
     email: { type: String, required: true, unique: true },
-    contact: { type: String, required: true },
+    contact: { type: String },
  
     dob: { type: Date },
     password: { type: String, required: true, select: false },

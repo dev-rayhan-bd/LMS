@@ -14,7 +14,7 @@ export interface TUser {
   
   password: string;
   dob?: Date;
-  contact: string;
+  contact?: string;
   verification?: {
     code: string | null;
     expireDate: Date | null;
