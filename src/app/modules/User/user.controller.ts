@@ -118,8 +118,9 @@ const approveUser = catchAsync(async (req, res) => {
   });
 });
 const assignParent = catchAsync(async (req, res) => {
-  const result = await UserServices.assignParentToStudentInDB(req.user.userId, req.body.parentId);
-  sendResponse(res, { statusCode: 200, success: true, message: "Parent assigned successfully", data: result });
+  const parentIds = Array.isArray(req.body.parentIds) ? req.body.parentIds : [req.body.parentIds || req.body.parentId];
+  const result = await UserServices.assignParentToStudentInDB(req.user.userId, parentIds);
+  sendResponse(res, { statusCode: 200, success: true, message: "Parent(s) assigned successfully", data: result });
 });
 const getMyChildren = catchAsync(async (req: Request, res: Response) => {
   const parentId = req.user.userId; 
@@ -133,6 +134,17 @@ const getMyChildren = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const removeParent = catchAsync(async (req: Request, res: Response) => {
+  const studentId = req.user.userId;
+  const { parentId } = req.body;
+  const result = await UserServices.removeParentFromStudentInDB(studentId, parentId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Parent removed successfully",
+    data: result,
+  });
+});
 export const UserControllers = {
   updateProfile,
 
@@ -141,6 +153,6 @@ export const UserControllers = {
   getAllUser,
   getSingleProfile,
   deleteUser,
-  toggleUserBlock,approveUser,assignParent,getMyChildren
+  toggleUserBlock,approveUser,assignParent,removeParent,getMyChildren
  
 };

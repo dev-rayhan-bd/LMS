@@ -188,6 +188,58 @@ export const sendNotificationToCourse = async (
   }
 }; 
 
+// Notify parents of all students enrolled in a course
+export const notifyParentsOfCourseStudents = async (
+  courseId: string,
+  title: string,
+  message: string,
+  type: TNotificationType
+) => {
+  const course = await CourseModel.findById(courseId).populate({
+    path: 'students',
+    select: 'parentIds fullName',
+  });
+  if (course && course.students) {
+    const notificationPromises: Promise<void>[] = [];
+    for (const student of course.students as any[]) {
+      if (student.parentIds && student.parentIds.length > 0) {
+        for (const parentId of student.parentIds) {
+          notificationPromises.push(
+            sendPushNotification(
+              parentId.toString(),
+              title,
+              message.replace("[StudentName]", student.fullName || "Your child"),
+              type
+            )
+          );
+        }
+      }
+    }
+    await Promise.all(notificationPromises);
+  }
+};
+
+// Notify all parents of a student when their profile changes
+export const notifyParentsOfProfileChange = async (
+  studentId: string,
+  changedFields: string[]
+) => {
+  const student = await UserModel.findById(studentId).select('parentIds fullName');
+  if (student && student.parentIds && student.parentIds.length > 0) {
+    const fieldList = changedFields.join(', ');
+    await Promise.all(
+      student.parentIds.map((parentId) =>
+        sendPushNotification(
+          parentId.toString(),
+          'Profile Updated 📝',
+          `${student.fullName || "Your child"}'s profile has been updated. Changed: ${fieldList}.`,
+          'general'
+        )
+      )
+    );
+  }
+};
+
 export const sendNotificationToAdmins = async (
   title: string,
   message: string,
@@ -213,13 +265,17 @@ export const notifyParentOfStudent = async (
   message: string,
   type: 'task' | 'class' | 'announcement' | 'result' | 'general'
 ) => {
-  const student = await UserModel.findById(studentId).select('parentId fullName');
-  if (student && student.parentId) {
-    await sendPushNotification(
-      student.parentId.toString(),
-      title,
-      message.replace("[StudentName]", student.fullName || "Your child"),
-      type
+  const student = await UserModel.findById(studentId).select('parentIds fullName');
+  if (student && student.parentIds && student.parentIds.length > 0) {
+    await Promise.all(
+      student.parentIds.map((parentId) =>
+        sendPushNotification(
+          parentId.toString(),
+          title,
+          message.replace("[StudentName]", student.fullName || "Your child"),
+          type
+        )
+      )
     );
   }
 };

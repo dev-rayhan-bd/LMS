@@ -7,6 +7,7 @@ const createSubmissionSchema = z.object({
 
 const markSubmissionSchema = z.object({
   marks: z.number("Marks are required").min(0),
+  totalMarks: z.number("Total marks are required").min(1),
   feedback: z.string().optional(),
 });
 

@@ -4,6 +4,7 @@ import app from './app';
 
 import mongoose from 'mongoose';
 import config from './app/config';
+import { startDeadlineChecker } from './app/utils/deadlineChecker';
 
 // import { initializeSocket } from './socket';
 
@@ -16,6 +17,9 @@ async function main() {
     server = app.listen(config.port, () => {
       console.log(`app is listening on port ${config.port}`);
     });
+
+    // Start deadline checker cron (notifies teachers/assistants/parents)
+    startDeadlineChecker();
 
     // initializeSocket(server);
   } catch (err) {

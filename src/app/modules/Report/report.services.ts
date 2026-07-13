@@ -949,8 +949,8 @@ const getDetailedTabularReport = async (courseId: string, searchTerm: string = '
 
 const getDetailedStudentProgress = async (courseId: string, studentId: string) => {
     const student = await UserModel.findById(studentId)
-        .populate({ path: 'parentId', select: 'fullName image contact email' })
-        .select('fullName image contact role parentId').lean();
+        .populate({ path: 'parentIds', select: 'fullName image contact email' })
+        .select('fullName image contact role parentIds').lean();
 
     if (!student) throw new Error("Student not found");
 
@@ -965,7 +965,7 @@ const getDetailedStudentProgress = async (courseId: string, studentId: string) =
 
     return {
         studentInfo: student,
-        parentInfo: student.parentId || null,
+        parentInfo: student.parentIds || null,
         instructors: { teacher: course?.teacherId || null, assistant: course?.assistantId || null },
         academicStats: progressStats,
         alertMessage: alertMessage
@@ -1036,6 +1036,8 @@ const getStudentMarksHistoryFromDB = async (courseId: string, studentId: string)
       status: uiStatus,
       isMarked: submission?.isMarked || false,
       marks: submission?.marks || 0,
+      totalMarks: submission?.totalMarks || 0,
+      percentage: submission?.percentage || 0,
       feedback: submission?.feedback || null,
       correctAnswerPdf: submission?.correctAnswerPdf || null,
       answerPdf: submission?.answerPdf || null,
@@ -1048,7 +1050,7 @@ const getStudentMarksHistoryFromDB = async (courseId: string, studentId: string)
 };
 
 const getChildEnrolledCoursesFromDB = async (parentId: string, childId: string) => {
-  const child = await UserModel.findOne({ _id: childId, parentId: parentId });
+  const child = await UserModel.findOne({ _id: childId, parentIds: { $in: [parentId] } });
   if (!child) throw new AppError(httpStatus.FORBIDDEN, "Unauthorized");
 
   const courses = await CourseModel.find({ students: childId }).populate({ path: 'teacherId', select: 'fullName image' }).populate({ path: 'assistantId', select: 'fullName image' }).lean();

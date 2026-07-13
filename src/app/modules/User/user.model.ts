@@ -44,11 +44,10 @@ const userSchema = new Schema<TUser, User, IUserMethods>(
  
 },
 
-  parentId: { 
+    parentIds: [{ 
       type: Schema.Types.ObjectId, 
       ref: 'User',
-      default: null 
-    },
+    }],
     fcmToken: { type: String, required: true },
  
 

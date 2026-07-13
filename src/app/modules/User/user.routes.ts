@@ -84,6 +84,7 @@ router.patch(
 
 
 router.patch('/assign-parent', auth('student'), UserControllers.assignParent);
+router.patch('/remove-parent', auth('student'), UserControllers.removeParent);
 router.get(
   '/my-children',
   auth(USER_ROLE.parent), 

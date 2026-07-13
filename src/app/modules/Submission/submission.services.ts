@@ -116,9 +116,14 @@ const markSubmissionInDB = async (id: string, payload: Partial<ISubmission>) => 
   const submission = await SubmissionModel.findById(id);
   if (!submission) throw new AppError(httpStatus.NOT_FOUND, "Submission not found");
 
+  // Auto-calculate percentage
+  const marks = payload.marks ?? 0;
+  const totalMarks = payload.totalMarks ?? 1;
+  const percentage = parseFloat(((marks / totalMarks) * 100).toFixed(2));
+
   const result = await SubmissionModel.findByIdAndUpdate(
     id,
-    { ...payload, isMarked: true },
+    { ...payload, percentage, isMarked: true },
     { new: true }
   );
    if (result) {

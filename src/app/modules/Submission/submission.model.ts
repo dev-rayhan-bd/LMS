@@ -12,6 +12,8 @@ const submissionSchema = new Schema<ISubmission>({
     default: 'in time' 
   },
   marks: { type: Number, default: 0 },
+  totalMarks: { type: Number, default: 0 },
+  percentage: { type: Number, default: 0 },
   feedback: { type: String },
   correctAnswerPdf: { type: String },
   isMarked: { type: Boolean, default: false }

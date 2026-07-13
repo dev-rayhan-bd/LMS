@@ -11,6 +11,7 @@ email?:string;
 contact?:string;
 dob?:string;
 location?:string;
+gender?:string;
  
 };
 

@@ -9,6 +9,8 @@ export interface ISubmission {
   answerPdf: string;
   submissionStatus: TSubmissionStatus;
   marks?: number;
+  totalMarks?: number;
+  percentage?: number;
   feedback?: string;
   correctAnswerPdf?: string; 
   isMarked: boolean;

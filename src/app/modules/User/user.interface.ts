@@ -32,7 +32,7 @@ zoomAccessToken?: string;
   createdAt?: Date;
   updatedAt?: Date;
    isOtpVerified:boolean;
-parentId?: mongoose.Types.ObjectId;
+parentIds?: mongoose.Types.ObjectId[];
 }
 
 export interface IUserMethods {

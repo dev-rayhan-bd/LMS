@@ -1,6 +1,6 @@
 import QueryBuilder from "../../builder/QueryBuilder";
 import AppError from "../../errors/AppError";
-import { sendNotificationToCourse, sendPushNotification } from "../../utils/sendNotification";
+import { sendNotificationToCourse, sendPushNotification, notifyParentsOfCourseStudents } from "../../utils/sendNotification";
 import { ClassModel } from "../Class/class.model";
 import { CourseModel } from "../Course/course.model";
 import { TaskModel } from "../Task/task.model";
@@ -22,8 +22,13 @@ const createAnnouncementIntoDB = async (payload: IAnnouncement) => {
     'New Announcement! 📢',
     `New update from teacher: "${payload.details.substring(0, 40)}..."`,
     'announcement'
-  );
-  return result;
+  );  // Notify parents of all students in the course
+  await notifyParentsOfCourseStudents(
+    payload.courseId.toString(),
+    'New Announcement for [StudentName] \ud83d\udce2',
+    `New announcement for [StudentName]: "${payload.details.substring(0, 40)}..."`,
+    'announcement'
+  );  return result;
 };
 
 const getAnnouncementsByCourseFromDB = async (courseId: string, query: Record<string, unknown>) => {

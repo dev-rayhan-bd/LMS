@@ -5,7 +5,7 @@ import { TEditProfile } from "./user.constant";
 import httpStatus from 'http-status';
 import { UserModel } from "./user.model";
 import QueryBuilder from "../../builder/QueryBuilder";
-import { sendPushNotification } from "../../utils/sendNotification";
+import { sendPushNotification, notifyParentsOfProfileChange } from "../../utils/sendNotification";
 import { CourseModel } from "../Course/course.model";
 import { StudentProgressModel } from "../Report/report.model";
 import { AttendanceModel } from "../Attendence/attendence.model";
@@ -20,6 +20,12 @@ const updateProfileFromDB = async (id: string, payload: TEditProfile) => {
     throw new AppError(httpStatus.NOT_FOUND, "User not found!");
   }
 
+  const changedFields: string[] = [];
+  if (payload.firstName && payload.firstName !== currentUser.firstName) changedFields.push('name');
+  if (payload.lastName && payload.lastName !== currentUser.lastName) changedFields.push('name');
+  if (payload.contact && payload.contact !== currentUser.contact) changedFields.push('contact');
+  if (payload.dob && payload.dob !== currentUser.dob?.toString()) changedFields.push('date of birth');
+  if (payload.gender && payload.gender !== currentUser.gender) changedFields.push('gender');
 
   const firstName = payload.firstName || currentUser.firstName;
   const lastName = payload.lastName || currentUser.lastName;
@@ -33,11 +39,16 @@ const updateProfileFromDB = async (id: string, payload: TEditProfile) => {
     runValidators: true,
   });
 
+  // If student's profile changed, notify all their parents
+  if (currentUser.role === 'student' && changedFields.length > 0 && currentUser.parentIds && currentUser.parentIds.length > 0) {
+    await notifyParentsOfProfileChange(id, changedFields);
+  }
+
   return result;
 };
 const getMyProfileFromDB = async (id: string) => {
   const result = await UserModel.findById(id).populate({
-    path: 'parentId',
+    path: 'parentIds',
     select: 'fullName image contact email', 
   });
 
@@ -150,33 +161,66 @@ const approveUserFromDB = async (id: string) => {
   return result;
 };
 
-const assignParentToStudentInDB = async (studentId: string, parentId: string) => {
-  // 1. Check if Parent exists and has the 'parent' role
-  const parent = await UserModel.findOne({ _id: parentId, role: 'parent' });
-  if (!parent) {
-    throw new AppError(httpStatus.NOT_FOUND, "Valid Parent not found with this ID");
+const assignParentToStudentInDB = async (studentId: string, parentIds: string[]) => {
+  // 1. Validate all parent IDs exist and have 'parent' role
+  const parents = await UserModel.find({ _id: { $in: parentIds }, role: 'parent' });
+  if (parents.length !== parentIds.length) {
+    throw new AppError(httpStatus.NOT_FOUND, "One or more valid Parents not found with the provided IDs");
   }
 
-  // 2. Update student document with parentId
+  // 2. Add parent IDs to student (using $addToSet to avoid duplicates)
   const result = await UserModel.findByIdAndUpdate(
     studentId,
-    { parentId: parentId },
+    { $addToSet: { parentIds: { $each: parentIds } } },
     { new: true }
   );
-  // Notify Parent
-  await sendPushNotification(
-    parentId,
-    'New Student Linked! 👨‍👩‍👦',
-    `${result?.fullName} has added you as their parent in Educology.`,
-    'general'
-  );
+
+  // Notify each Parent
+  for (const parent of parents) {
+    await sendPushNotification(
+      parent._id.toString(),
+      'New Student Linked! 👨\u200d👩\u200d👦',
+      `${result?.fullName} has added you as their parent in Educology.`,
+      'general'
+    );
+  }
+
   return result;
 };
 
+const removeParentFromStudentInDB = async (studentId: string, parentId: string) => {
+  // 1. Check student exists
+  const student = await UserModel.findById(studentId);
+  if (!student) {
+    throw new AppError(httpStatus.NOT_FOUND, "Student not found!");
+  }
+
+  // 2. Check the parent is actually assigned
+  if (!student.parentIds || !student.parentIds.some(id => id.toString() === parentId)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "This parent is not assigned to the student.");
+  }
+
+  // 3. Remove the parent from parentIds array
+  const result = await UserModel.findByIdAndUpdate(
+    studentId,
+    { $pull: { parentIds: parentId } },
+    { new: true }
+  );
+
+  // Notify removed Parent
+  await sendPushNotification(
+    parentId,
+    'Student Unlinked 👋',
+    `${result?.fullName} has removed you as a parent in Educology.`,
+    'general'
+  );
+
+  return result;
+};
 
 const getMyChildrenFromDB = async (parentId: string) => {
   const result = await UserModel.find({ 
-    parentId: parentId, 
+    parentIds: { $in: [parentId] }, 
     role: 'student' 
   }).select('firstName lastName fullName image email contact dob gender');
 
@@ -188,6 +232,6 @@ export const UserServices = {
   updateProfileFromDB,
   getMyProfileFromDB,
   deletePrifileFromDB,
-  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB,approveUserFromDB,assignParentToStudentInDB,getMyChildrenFromDB
+  getAllUserFromDB,getSingleProfileFromDB,deleteUserFromDB,blockUserFromDB,approveUserFromDB,assignParentToStudentInDB,removeParentFromStudentInDB,getMyChildrenFromDB
 
 };

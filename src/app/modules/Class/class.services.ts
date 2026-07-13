@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import QueryBuilder from "../../builder/QueryBuilder";
-import { sendNotificationToCourse } from "../../utils/sendNotification";
+import { sendNotificationToCourse, notifyParentsOfCourseStudents } from "../../utils/sendNotification";
 import { CommentModel } from "../Announcement/announcement.model";
 import { ZoomServices } from "../Zoom/zoom.services";
 import { IClass } from "./class.interface";
@@ -49,6 +49,13 @@ const createClassIntoDB = async (payload: Partial<IClass>, userId: string) => {
       result.course.toString(),
       'New Class Scheduled! 📚',
       `Class "${result.title}" is scheduled on ${result.date} at ${result.time}.`,
+      'class'
+    );
+    // Notify parents of all students in the course
+    await notifyParentsOfCourseStudents(
+      result.course.toString(),
+      'New Class Scheduled for [StudentName] 📚',
+      `A new class "${result.title}" has been scheduled for [StudentName].`,
       'class'
     );
   }
