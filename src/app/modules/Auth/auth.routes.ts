@@ -33,12 +33,10 @@ router.post(
 );
 router.post('/login',
     validateRequest(AuthValidation.loginValidationSchema),
-    auth(USER_ROLE.teacher, USER_ROLE.superAdmin, USER_ROLE.student,USER_ROLE.parent,USER_ROLE.assistant),
     AuthControllers.userLogin
 );
 router.post('/admin/login',
     validateRequest(AuthValidation.AdminloginValidationSchema),
-    auth(USER_ROLE.teacher, USER_ROLE.superAdmin),
     AuthControllers.AdminLogin
 );
 router.post('/changePassword',
