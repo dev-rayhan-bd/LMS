@@ -157,7 +157,7 @@ export const verifyOTPForRegistration = async (email: string, otp: string) => {
   );
     await sendNotificationToAdmins(
     'New User Registered! 👤',
-    `${user.fullName} has just joined El-afrik.`,
+    `${user.fullName} has just joined Educology.`,
     'general'
   );
   return {

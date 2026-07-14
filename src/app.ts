@@ -1,4 +1,3 @@
-// c:\STA\El-afrik\src\app.ts (FIXED)
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -24,7 +23,6 @@ app.use(
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000',
-      'https://el-afrik.vercel.app',
       'http://15.223.245.199',
       'http://15.223.245.199:3000',
       'https://dr-dina-dashboard.vercel.app',
