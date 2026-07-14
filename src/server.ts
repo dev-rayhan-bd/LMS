@@ -5,6 +5,7 @@ import app from './app';
 import mongoose from 'mongoose';
 import config from './app/config';
 import { startDeadlineChecker } from './app/utils/deadlineChecker';
+import seedSuperAdmin from './app/db/seed';
 
 // import { initializeSocket } from './socket';
 
@@ -13,6 +14,9 @@ let server: Server;
 async function main() {
   try {
     await mongoose.connect(config.database_url as string);
+
+    // Seed super admin if none exists
+    await seedSuperAdmin();
 
     server = app.listen(config.port, () => {
       console.log(`app is listening on port ${config.port}`);

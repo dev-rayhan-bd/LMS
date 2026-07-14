@@ -278,6 +278,14 @@ const loginAdmin = async (payload: TLoginAdmin) => {
     throw new AppError(httpStatus.BAD_REQUEST, "Password is incorrect!");
   }
 
+  // Only superAdmin can access the dashboard
+  if (user.role !== 'superAdmin') {
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Access denied! Only administrators can access the dashboard.'
+    );
+  }
+
   // Ensure OTP is verified
   if (!user.isOtpVerified) {
     throw new AppError(
@@ -285,9 +293,22 @@ const loginAdmin = async (payload: TLoginAdmin) => {
       "OTP verification is required before logging in!"
     );
   }
+
+  if (user.status === 'pending') {
+    throw new AppError(
+      httpStatus.LOCKED,
+      "Your account is still pending admin approval. Please wait for confirmation."
+    );
+  }
+
 if (user.status === 'blocked') {
   throw new AppError(httpStatus.FORBIDDEN, 'Your account is blocked by admin!');
 }
+
+if (user.status !== 'in-progress') {
+  throw new AppError(httpStatus.FORBIDDEN, 'Your account is not active!');
+}
+
   const jwtPayload = {
     userId: user._id!.toString(),
     role: user?.role,
