@@ -26,7 +26,8 @@ app.use(
       'http://15.223.245.199',
       'http://15.223.245.199:3000',
       'https://dr-dina-dashboard.vercel.app',
-      'http://13.48.155.154'
+      'http://13.48.155.154',
+      'https://dashboard.educology.app/auth/login'
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
