@@ -74,7 +74,7 @@ const handleZoomWebhook = catchAsync(async (req: Request, res: Response) => {
 
   if (event === "meeting.participant_joined" && meetingId) {
     const participant = payload.object.participant;
-    const studentEmail = participant.user_email;
+    const studentEmail = participant.email || participant.user_email;
     const joinTime = new Date(participant.join_time);
  console.log("📧 LOOKING_FOR_STUDENT_EMAIL:", studentEmail);
     console.log("🆔 MEETING_ID_FROM_ZOOM:", meetingId);
