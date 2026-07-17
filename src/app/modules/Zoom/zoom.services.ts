@@ -69,7 +69,11 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
   mute_upon_entry: true,
   auto_recording: 'cloud',
   meeting_authentication: true,
-  //  authentication_option: 'sign_in_with_zoom'
+  //attendence without zoom pro account 
+   approval_type: 0,       
+    registration_type: 1,  
+    enforce_login: true ,
+   authentication_option: 'sign_in_with_zoom'
     }
   }, {
     headers: { Authorization: `Bearer ${token}` }
