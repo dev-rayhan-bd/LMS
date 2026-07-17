@@ -67,7 +67,8 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
   host_video: true,
   participant_video: true,
   mute_upon_entry: true,
-  auto_recording: 'cloud',
+  // auto_recording: 'cloud',
+  auto_recording: 'none',
   meeting_authentication: true,
   //attendence without zoom pro account 
    approval_type: 0,       
