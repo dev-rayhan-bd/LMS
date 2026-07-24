@@ -73,7 +73,7 @@ const createZoomMeeting = async (userId: string, classTitle: string, startTime: 
   //attendence without zoom pro account 
    approval_type: 0,       
     registration_type: 1,  
-    enforce_login: true ,
+    enforce_login: false ,
   //  authentication_option: 'sign_in_with_zoom'
     }
   }, {
