@@ -20,6 +20,8 @@ const uploadImage = async (
       {
         folder: 'dr-dina', 
         resource_type: 'auto',
+    //     use_filename: true,     
+    // unique_filename: false 
       },
       (error, result) => {
         if (error) {
