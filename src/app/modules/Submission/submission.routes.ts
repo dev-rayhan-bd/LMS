@@ -12,7 +12,7 @@ const parseBody = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-router.post(
+router.patch(
   '/task',
   auth('student'),
   upload.single('answerPdf'),

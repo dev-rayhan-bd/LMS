@@ -7,12 +7,13 @@ import AppError from "../../errors/AppError";
 
 
 const submitTask = catchAsync(async (req, res) => {
-  const answerPdf = await uploadImage(req);
-  const result = await SubmissionServices.submitTaskIntoDB({
-    ...req.body,
-    student: req.user.userId,
-    answerPdf
-  });
+  const payload: any = { ...req.body, student: req.user.userId };
+  
+  if (req.file) {
+    payload.answerPdf = await uploadImage(req);
+  }
+
+  const result = await SubmissionServices.submitTaskIntoDB(payload);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,

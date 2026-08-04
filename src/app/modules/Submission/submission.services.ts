@@ -14,17 +14,25 @@ const submitTaskIntoDB = async (payload: Partial<ISubmission>) => {
     student: payload.student 
   });
 
-  if (isAlreadySubmitted) {
-
-    throw new AppError(
-        httpStatus.BAD_REQUEST, 
-        "You have already submitted this homework/exam. You cannot submit it again."
-    );
-  }
-
   const now = new Date();
   const endDateTime = new Date(`${task.endDate}T${task.endTime}`);
   payload.submissionStatus = now > endDateTime ? 'late' : 'in time';
+
+  if (isAlreadySubmitted) {
+    if (isAlreadySubmitted.isMarked) {
+      throw new AppError(
+          httpStatus.BAD_REQUEST, 
+          "Cannot update a marked submission."
+      );
+    }
+
+    const result = await SubmissionModel.findByIdAndUpdate(
+      isAlreadySubmitted._id,
+      { ...payload },
+      { new: true, runValidators: true }
+    );
+    return result;
+  }
 
   const result = await SubmissionModel.create(payload);
   return result;
